@@ -32,7 +32,7 @@ CREATE TABLE Quotes (
 
 CREATE TABLE OwnReview (
     RatingID int NOT NULL PRIMARY KEY,
-    Rating int;
+    Rating int,
     SmallReview varchar (500),
     BookID int NOT NULL,
     FOREIGN KEY (BookID) REFERENCES Book (BookID)
@@ -51,8 +51,5 @@ CREATE TABLE BookAuthorJoin (
     FOREIGN KEY (BookID) REFERENCES Book (BookID),
     FOREIGN KEY (AuthorID) REFERENCES Author (AuthorID)
 );
-
-INSERT INTO Book VALUES
-    ('Toisen lapset', NULL, 'Omaelämänkerta', 1981, 318);
 
 
