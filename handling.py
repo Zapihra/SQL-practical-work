@@ -36,17 +36,17 @@ def main():
         if userInput == "1":
             printAllBooks()
         if userInput == "2":
-            pass
+            printAuthor()
         if userInput == "3":
-            pass
+            addBook()
         if userInput == "4":
-            pass
+            changeReading()
         if userInput == "5":
-            pass
+            deleteFromShelf()
         if userInput == "6":
-            pass
+            modifyReview()
         if userInput == "7":
-            pass
+            printBook()
         if userInput == "0":
             print("Ending software...")
     db.close()        
@@ -55,5 +55,24 @@ def main():
 ############ Copied from week 6 homework ends ##########
 def printAllBooks():
     pass
+
+def printAuthor():
+    pass
+
+def addBook():
+    pass
+
+def changeReading():
+    pass
+
+def deleteFromShelf():
+    pass
+
+def modifyReview():
+    pass
+
+def printBook():
+    pass
+
 
 main()
