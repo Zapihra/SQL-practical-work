@@ -1,11 +1,11 @@
 CREATE TABLE Bookshelf (
-    BookshelfID int NOT NULL PRIMARY KEY UNIQUE,
+    BookshelfID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
     Bookshelf  varchar (20),
     Shelf int
 );
 
 CREATE TABLE Book (
-    BookID INT NOT NULL PRIMARY KEY UNIQUE,
+    BookID INT NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
     Name varchar (50) NOT NULL,
     Series varchar (50),
     Genre varchar (20) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE Book (
 );
 
 CREATE TABLE ReadingStatus (
-    StatusID int NOT NULL PRIMARY KEY UNIQUE,
+    StatusID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
     Status varchar (20),
     WhereAt int,
     BookID int NOT NULL,
@@ -24,14 +24,14 @@ CREATE TABLE ReadingStatus (
 );
 
 CREATE TABLE Quotes (
-    QuoteID int NOT NULL PRIMARY KEY UNIQUE,
+    QuoteID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
     Quote varchar (200),
     BookID int NOT NULL,
     FOREIGN KEY (BookID) REFERENCES Book (BookID)
 );
 
 CREATE TABLE OwnReview (
-    RatingID int NOT NULL PRIMARY KEY UNIQUE,
+    RatingID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
     Rating int,
     SmallReview varchar (500),
     BookID int NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE OwnReview (
 );
 
 CREATE TABLE Author (
-    AuthorID int NOT NULL PRIMARY KEY UNIQUE,
+    AuthorID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
     FirstName varchar (20) NOT NULL,
     LastName varchar (20),
     ReleasedBooks int NOT NULL

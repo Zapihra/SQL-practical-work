@@ -54,9 +54,7 @@ def main():
 
 ############ Copied from week 6 homework ends ##########
 def printAllBooks():
-    #SELECT Name, Series, Genre, ReleaseYear, Pages FROM Book;
-    #SELECT FisrtName Lastname FROM 
-    #'SELECT FirstName, LastName, Name, Series, Genre, ReleaseYear, Pages FROM AuthorBookJoin INNER JOIN Author ON AuthorBookJoin.AuthorID = Author.AuthorID INNER JOIN Book ON AuthorBookJoin.BookID = Book.BookID'
+    
     for row in cur.execute('SELECT FirstName, LastName, Name, Series, Genre, ReleaseYear, Pages FROM AuthorBookJoin INNER JOIN Author ON AuthorBookJoin.AuthorID = Author.AuthorID INNER JOIN Book ON AuthorBookJoin.BookID = Book.BookID'):
         print(row)
 
@@ -69,7 +67,8 @@ def printAuthor():
     return
 
 def addBook():
-    
+    bookname, series, genre, year, pages = None
+
     bookname = input('Give the name of the book: ')
     series = input('Give the series of the book: ')
     genre = input('Give the Genre of the book: ')
@@ -81,6 +80,11 @@ def addBook():
     if (found == '1'):
         print("Book is already in the library")
     else:
+        booksh, shelf, quote = None
+        rating, review = None
+        status, whereAt = None
+        authorFirst, authorLast, released = None
+
         inbooksh = input('Is it in a bookshelf[y/n]: ')
         if inbooksh == 'y':
             booksh = input('Give the bookshelf: ')
@@ -89,7 +93,6 @@ def addBook():
         wantQuote = input('Want to add a quote?[y/n]: ')
         if wantQuote == 'y':
             quote = input('Write the quote: ')
-            wantReview = input('Want to give review?[y/n]: ')
         
         wantRating = input('Want to give a review[y/n]: ')
         if wantRating == 'y':
@@ -103,18 +106,27 @@ def addBook():
         
         authorFirst = input('First name of the author: ')
         authorLast = input('Last name of the author (can be empty): ')
-        released = int(input('Number of released books': ))
+        released = int(input('Number of released books: '))
 
-        
         cur.execute("SELECT EXISTS('SELECT 1 FROM Author WHERE fistName = (?) AND lastName = (?)')", (authorFirst, authorLast, ))
         found2 = cur.fetchone()
         if found2 == '0':
-            cur.execute('INSERT INTO Author VALUES (?), (?), (?);', (authorFirst, authorLast, released, ))
+            cur.execute('INSERT INTO Author VALUES (?, ?, ?);', (authorFirst, authorLast, released, ))
 
         if found == '1' and found2 == '1':
             return
     
-    cur.execute('INSERT INTO BookAuthorJoin VALUES (?), (?):', (('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series)), ('SELECT AuthorID FROM Author WHERE fistName = (?) AND lastName = (?)', (authorFirst, authorLast))))
+        cur.execute('INSERT INTO Bookshelf (Bookshelf, Shelf) VALUES (?, ?);', (booksh, shelf, ))
+        db.commit()
+        cur.execute('INSERT INTO Book (FirstName, LastName, Name, Series, Genre, ReleaseYear, Pages) VALUES (?, ?, ?, ?, ?);', (bookname, series, genre, released, year, pages,))
+        db.commit()
+        cur.execute('INSERT INTO Quotes (Quote, BookID) VALUES (?, ?);', (quote, ('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series, ))))
+        db.commit()
+        cur.execute('INSERI INTO OwnRating (Rating, SmallReview, BookID) VALUES (?, ?, ?);', (rating, review, ('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series, ))))
+        db.commit()
+        cur.execute('INSERT INTO ReadingStatus (Status, WhereAt, BookID) VALUES (?, ?, ?);', (status, whereAt, ('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series, ))))
+        db.commit()
+        cur.execute('INSERT INTO BookAuthorJoin VALUES (?, ?);', (('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series, )), ('SELECT AuthorID FROM Author WHERE fistName = (?) AND lastName = (?)', (authorFirst, authorLast, ))))
 
     return
 
@@ -128,9 +140,14 @@ def deleteFromShelf():
     pass
 
 def modifyReview():
-    pass
-    #input('Give the rating(1-5): ')
-    #input('Small written review: ')
+    
+    bookname = input('Give the name of the book: ')
+    series = input('Give the series of the book: ')
+    rating = input('Give the rating(1-5): ')
+    review = input('Small written review: ')
+    cur.execute('UPDATE OwnReview SET Rating = (?), SmallReview = (?) WHERE (SELECT BookID FROM Book WHERE Name = (?) AND series = (?))', (rating, review, bookname, series))
+    
+    return
 
 def printBook():
     pass
