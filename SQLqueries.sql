@@ -36,7 +36,7 @@ CREATE TABLE OwnReview (
     SmallReview varchar (500),
     BookID INTEGER NOT NULL,
     FOREIGN KEY (BookID) REFERENCES Book (BookID)
-    CHECK (Rating <=5);
+    CHECK ((Rating <=5 AND Rating >=1) OR NULL)
 );
 
 CREATE TABLE Author (

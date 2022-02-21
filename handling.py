@@ -237,7 +237,7 @@ def modifyReview():
     cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', ( bookname, series, ))
     bookid = cur.fetchone()
 
-    cur.execute('INSERT INTO SET Rating = (?), SmallReview = (?) \
+    cur.execute('UPDATE OwnReview SET Rating = (?), SmallReview = (?) \
         WHERE BookID = (?);', (rating, review, bookid[0]))
     db.commit()
     return
