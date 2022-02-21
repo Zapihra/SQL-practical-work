@@ -29,7 +29,8 @@ def main():
         print("3: Add book to the collection")
         print("4: Change reading status")
         print("5: Modify the books review")
-        print("6: Print individual book information")
+        print("6: Add quote")
+        print("7: Print individual book information")
         print("0: Quit")
         userInput = input("What do you want to do? ")
 
@@ -44,6 +45,8 @@ def main():
         if userInput == "5":
             modifyReview()
         if userInput == "6":
+            addQuote()
+        if userInput == "7":
             printBook()            
         if userInput == "0":
             print("Ending software...")
@@ -213,6 +216,7 @@ def changeReading():
     status = input('Status(not started/started/complete): ')
     whereAt = int(input('What page are you at: '))
 
+    #bookid was found using the book information
     cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', ( bookname, series, ))
     bookid = cur.fetchone()
 
@@ -229,12 +233,29 @@ def modifyReview():
     rating = int(input('Give the rating(1-5): '))
     review = input('Small written review: ')
 
+    #bookid was found using the book information
     cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', ( bookname, series, ))
     bookid = cur.fetchone()
 
-    cur.execute('UPDATE OwnReview SET Rating = (?), SmallReview = (?) \
+    cur.execute('INSERT INTO SET Rating = (?), SmallReview = (?) \
         WHERE BookID = (?);', (rating, review, bookid[0]))
     db.commit()
+    return
+
+def addQuote():
+
+    bookname = input('Give the name of the book: ')
+    series = input('Give the series of the book: ')
+    quote = input("Write the quote here: ")
+
+
+    cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', ( bookname, series, ))
+    bookid = cur.fetchone()[0]
+
+    cur.execute('INSERT INTO Quotes (Quote, BookID) \
+           VALUES (?, ?)', (quote, bookid, ))
+    db.commit()
+
     return
 
 def printBook():
@@ -245,23 +266,38 @@ def printBook():
     bookid = cur.fetchone()[0]
 
     
-    cur.execute('SELECT Author.FirstName, Author.LastName, Book.Name, Book.Series, Book.Genre, Book.ReleaseYear, Book.Pages FROM BookAuthorJoin \
-        INNER JOIN Author ON Author.AuthorID = BookAuthorJoin.AuthorID \
+    cur.execute('SELECT Book.Name, Book.Series, Book.Genre, Book.ReleaseYear, Book.Pages FROM BookAuthorJoin \
         INNER JOIN Book ON Book.BookID = BookAuthorJoin.BookID \
         WHERE BookAuthorJoin.BookID = (?);', (bookid, ))
     bookAuthor = cur.fetchone()
 
-    cur.execute('SELECT Bookshelf.Bookshelf, Bookshelf.Shelf, Quotes.Quote, \
+    cur.execute('SELECT Bookshelf.Bookshelf, Bookshelf.Shelf, \
             OwnReview.Rating, OwnReview.SmallReview, ReadingStatus.Status, ReadingStatus.whereAt FROM Book \
         INNER JOIN Bookshelf ON Bookshelf.BookshelfID = Book.BookshelfID \
-        INNER JOIN Quotes ON Quotes.BookID = Book.BookID \
         INNER JOIN ReadingStatus ON ReadingStatus.BookID = Book.BookID \
         INNER JOIN OwnReview ON OwnReview.BookID = Book.BookID \
         WHERE Book.BookID = (?);', (bookid, ))
     bookInfo = cur.fetchone()
 
-    print(bookAuthor)
-    print(bookInfo)
+    for row in cur.execute('SELECT Author.FirstName, Author.LastName FROM BookAuthorJoin \
+        INNER JOIN Author ON Author.AuthorID = BookAuthorJoin.AuthorID \
+        INNER JOIN Book ON Book.BookID = BookAuthorJoin.BookID \
+        WHERE BookAuthorJoin.BookID = (?);', (bookid, )):
+        print("Author: {} {}".format(row[0], row[1], ))
+
+
+    print("Book name {}, series {} and genre {}".format(bookAuthor[0], bookAuthor[1], bookAuthor[2]))
+    print("Book's release year {} and number of pages {}".format(bookAuthor[3], bookAuthor[4]))
+    print("Bookmark {} on page {}".format(bookInfo[4], bookInfo[5]))
+    print("Shelf placing: {} {} shelf".format(bookInfo[0], bookInfo[1]))
+    print("Your quotes of the book: ")
+
+    for row in cur.execute('SELECT Quote FROM Quotes \
+        INNER JOIN Book ON Book.BookID = Quotes.BookID \
+        WHERE Book.BookID = (?);', (bookid, )):
+        print(row[0])
+
+    print("Your review {}/5\n{}".format(bookInfo[2], bookInfo[3]))
     return
 
 main()
