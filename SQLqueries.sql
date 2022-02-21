@@ -1,55 +1,54 @@
 CREATE TABLE Bookshelf (
-    BookshelfID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
+    BookshelfID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     Bookshelf  varchar (20),
     Shelf int
 );
 
 CREATE TABLE Book (
-    BookID INT NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
+    BookID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     Name varchar (50) NOT NULL,
     Series varchar (50),
     Genre varchar (20) NOT NULL,
-    ReleaseYear int NOT NULL,
-    Pages int NOT NULL,
-    BookshelfID int NOT NULL,
+    ReleaseYear INTEGER NOT NULL,
+    Pages INTEGER NOT NULL,
+    BookshelfID INTEGER NOT NULL,
     FOREIGN KEY (BookshelfID) REFERENCES Bookshelf (BookshelfID)
 );
 
 CREATE TABLE ReadingStatus (
-    StatusID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
+    StatusID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     Status varchar (20),
-    WhereAt int,
-    BookID int NOT NULL,
+    WhereAt INTEGER,
+    BookID INTEGER NOT NULL,
     FOREIGN KEY (BookID) REFERENCES Book (BookID)
 );
 
 CREATE TABLE Quotes (
-    QuoteID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
+    QuoteID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     Quote varchar (200),
-    BookID int NOT NULL,
+    BookID INTEGER NOT NULL,
     FOREIGN KEY (BookID) REFERENCES Book (BookID)
 );
 
 CREATE TABLE OwnReview (
-    RatingID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
-    Rating int,
+    RatingID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Rating INTEGER,
     SmallReview varchar (500),
-    BookID int NOT NULL,
+    BookID INTEGER NOT NULL,
     FOREIGN KEY (BookID) REFERENCES Book (BookID)
+    CHECK (Rating <=5);
 );
 
 CREATE TABLE Author (
-    AuthorID int NOT NULL PRIMARY KEY UNIQUE AUTOINCREMENT,
+    AuthorID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     FirstName varchar (20) NOT NULL,
     LastName varchar (20),
-    ReleasedBooks int NOT NULL
+    ReleasedBooks INTEGER NOT NULL
 );
 
 CREATE TABLE BookAuthorJoin (
-    BookID int NOT NULL,
-    AuthorID int NOT NULL,
+    BookID INTEGER NOT NULL,
+    AuthorID INTEGER NOT NULL,
     FOREIGN KEY (BookID) REFERENCES Book (BookID),
     FOREIGN KEY (AuthorID) REFERENCES Author (AuthorID)
 );
-
-

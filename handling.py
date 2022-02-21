@@ -1,4 +1,5 @@
 ############ Copied from week 6 homework ##########
+from asyncio.windows_events import NULL
 import sqlite3
 db = sqlite3.connect('practical_work.db')
 cur = db.cursor()
@@ -27,12 +28,11 @@ def main():
         print("2: Print author")
         print("3: Add book to the collection")
         print("4: Change reading status")
-        print("5: Delete book from bookshelf")
-        print("6: Modify the books review")
-        print("7: Print individual book information")
+        print("5: Modify the books review")
+        print("6: Print individual book information")
         print("0: Quit")
         userInput = input("What do you want to do? ")
-        print(userInput)
+
         if userInput == "1":
             printAllBooks()
         if userInput == "2":
@@ -42,11 +42,9 @@ def main():
         if userInput == "4":
             changeReading()
         if userInput == "5":
-            deleteFromShelf()
-        if userInput == "6":
             modifyReview()
-        if userInput == "7":
-            printBook()
+        if userInput == "6":
+            printBook()            
         if userInput == "0":
             print("Ending software...")
     db.close()        
@@ -55,25 +53,31 @@ def main():
 ############ Copied from week 6 homework ends ##########
 def printAllBooks():
     
-    for row in cur.execute('SELECT FirstName, LastName, Name, Series, Genre, ReleaseYear, Pages FROM AuthorBookJoin \
-        INNER JOIN Author ON AuthorBookJoin.AuthorID = Author.AuthorID \
-        INNER JOIN Book ON AuthorBookJoin.BookID = Book.BookID'):
+    for row in cur.execute('SELECT FirstName, LastName, Name, Series, Genre, ReleaseYear, Pages FROM BookAuthorJoin \
+        INNER JOIN Author ON BookAuthorJoin.AuthorID = Author.AuthorID \
+        INNER JOIN Book ON BookAuthorJoin.BookID = Book.BookID'):
         
-        print(row)
+        print("Author: {} {}; Book name {}, series {}, genre {}, release year {} and number of pages {}\
+            ".format(row[0], row[1], row[2], row[3], row[4], row[5], row[6]) )
 
     return
 
 def printAuthor():
+
+    authorFirst = input('First name of the author: ')
+    authorLast = input('Last name of the author (can be empty): ')
+    cur.execute('SELECT AuthorID FROM Author WHERE FirstName = (?) AND LastName = (?);', (authorFirst, authorLast, ))
+    authorid = cur.fetchone()[0]
     
-    for row in cur.execute('SELECT FirstName, LastName, ReleasedBooks, Name FROM AuthorBookJoin  \
-        INNER JOIN Author ON AuthorBookJoin.AuthorID = Author.AuthorID \
-        INNER JOIN Book ON AuthorBookJoin.BookID = Book.BookID'):
+    for row in cur.execute('SELECT FirstName, LastName, ReleasedBooks, Name, Series FROM BookAuthorJoin  \
+        INNER JOIN Author ON BookAuthorJoin.AuthorID = Author.AuthorID \
+        INNER JOIN Book ON BookAuthorJoin.BookID = Book.BookID \
+        WHERE BookAuthorJoin.AuthorID = (?)', (authorid, )):
         
-        print(row)
+        print("Author: {} {} number of released books {} book name {} and series {}".format(row[0], row[1], row[2], row[3], row[4]))
     return
 
 def addBook():
-    bookname, series, genre, year, pages = None
 
     bookname = input('Give the name of the book: ')
     series = input('Give the series of the book: ')
@@ -81,21 +85,76 @@ def addBook():
     year = int(input('Give the release year of the book: '))
     pages = int(input('Give number of pages in the book: '))
 
-    cur.execute("SELECT EXISTS('SELECT 1 FROM Book WHERE Name = (?) AND Series = (?)')", (bookname, series, ))
-    found = cur.fechone()
-    if (found == '1'):
+    #checks if the book already exists in the database
+    cur.execute('SELECT 1 FROM Book WHERE Name = (?) AND Series = (?)', (str(bookname), str(series), ))
+    found = cur.fetchone()
+    if found:
         print("Book is already in the library")
+        anotherAuthor =input("Want to add another author for the book?[y/n] ")
+        if anotherAuthor == 'y':
+
+            authorFirst = input('First name of the author: ')
+            authorLast = input('Last name of the author (can be empty): ')
+            released = int(input('Number of released books: '))
+
+            cur.execute('SELECT 1 FROM Author WHERE FirstName = (?) AND LastName = (?)', (str(authorFirst), str(authorLast), ))
+            found2 = cur.fetchone()
+            
+            if found2 == None:
+                cur.execute('INSERT INTO Author (FirstName, LastName, ReleasedBooks)\
+                    VALUES (?, ?, ?);', (str(authorFirst), str(authorLast), released, ))
+                db.commit()
+
+            cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', (bookname, series, ))
+            bookid = cur.fetchone()[0]
+            cur.execute('SELECT AuthorID FROM Author WHERE FirstName = (?) AND LastName = (?);', (authorFirst, authorLast, ))
+            authorid = cur.fetchone()[0]
+
+            cur.execute('SELECT 1 FROM BookAuthorJoin WHERE BookID = (?) AND AuthorID = (?)', (bookid, authorid))
+            check1 = cur.fetchone()
+
+            if check1:
+                print("Book already has this author")
+                return
+
+            cur.execute('INSERT INTO BookAuthorJoin VALUES (?, ?);', (bookid, authorid))
+            db.commit()
+            
+        else:#just returns for the menu if nothing is added
+            return
+
     else:
-        booksh, shelf, quote = None
-        rating, review = None
-        status, whereAt = None
-        authorFirst, authorLast, released = None
+        booksh = None
+        shelf = None 
+        quote = None
+        rating = None
+        review = None
+        status = None
+        whereAt = None
+        authorFirst = None
+        authorLast = None
+        released = None
 
         inbooksh = input('Is it in a bookshelf[y/n]: ')
         if inbooksh == 'y':
             booksh = input('Give the bookshelf: ')
             shelf = int(input('Give the shelf: '))
         
+        authorFirst = input('First name of the author: ')
+        authorLast = input('Last name of the author (can be empty): ')
+        released = int(input('Number of released books: '))
+
+        #checks if author already exists
+        cur.execute('SELECT 1 FROM Author WHERE FirstName = (?) AND LastName = (?)', (str(authorFirst), str(authorLast), ))
+        found2 = cur.fetchone()
+        
+        if found2 == None: #the new writer is created
+            cur.execute('INSERT INTO Author (FirstName, LastName, ReleasedBooks)\
+                VALUES (?, ?, ?);', (str(authorFirst), str(authorLast), released, ))
+            db.commit()
+
+
+        #extra questions for more information
         wantQuote = input('Want to add a quote?[y/n]: ')
         if wantQuote == 'y':
             quote = input('Write the quote: ')
@@ -109,37 +168,41 @@ def addBook():
         if wantReading == 'y':
             status = input('Status(not started/started/complete): ')
             whereAt = input('What page are you at: ')
-        
-        authorFirst = input('First name of the author: ')
-        authorLast = input('Last name of the author (can be empty): ')
-        released = int(input('Number of released books: '))
 
-        cur.execute("SELECT EXISTS('SELECT 1 FROM Author WHERE fistName = (?) AND lastName = (?)')", (authorFirst, authorLast, ))
-        found2 = cur.fetchone()
-        if found2 == '0':
-            cur.execute('INSERT INTO Author VALUES (?, ?, ?);', (authorFirst, authorLast, released, ))
-
-        if found == '1' and found2 == '1':
-            return
-    
+        #bookshelf added to the database
         cur.execute('INSERT INTO Bookshelf \
             (Bookshelf, Shelf) VALUES (?, ?);', (booksh, shelf, ))
         db.commit()
-        cur.execute('INSERT INTO Book (FirstName, LastName, Name, Series, Genre, ReleaseYear, Pages) \
-            VALUES (?, ?, ?, ?, ?);', (bookname, series, genre, released, year, pages,))
+
+        #bookshelf is defined and added to the book
+        cur.execute('SELECT BookshelfID FROM Bookshelf ORDER BY BookshelfID DESC LIMIT 1')
+        bookshID = cur.fetchone()
+        cur.execute('INSERT INTO Book (Name, Series, Genre, Pages, ReleaseYear, BookshelfID) \
+            VALUES (?, ?, ?, ?, ?, ?);', (bookname, series, genre, pages, year, bookshID[0]))
         db.commit()
+
+        #wanted book and author is defined
+        cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', (bookname, series, ))
+        bookid = cur.fetchone()[0]
+        cur.execute('SELECT AuthorID FROM Author WHERE FirstName = (?) AND LastName = (?);', (authorFirst, authorLast, ))
+        authorid = cur.fetchone()[0]
+
+        #adding additional parts to the book
         cur.execute('INSERT INTO Quotes (Quote, BookID) \
-            VALUES (?, ?);', (quote, ('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series, ))))
+           VALUES (?, ?)', (quote, bookid, ))
         db.commit()
-        cur.execute('INSERI INTO OwnRating (Rating, SmallReview, BookID) \
-            VALUES (?, ?, ?);', (rating, review, ('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series, ))))
+        cur.execute('INSERT INTO OwnReview (Rating, SmallReview, BookID) \
+            VALUES (?, ?, ?);', (rating, review, bookid))
         db.commit()
         cur.execute('INSERT INTO ReadingStatus (Status, WhereAt, BookID) \
-            VALUES (?, ?, ?);', (status, whereAt, ('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series, ))))
+            VALUES (?, ?, ?);', (status, whereAt, bookid))
         db.commit()
-        cur.execute('INSERT INTO BookAuthorJoin VALUES (?, ?);', 
-            (('SELECT BookID FROM Book WHERE Name = (?) AND series = (?)', (bookname, series, )), 
-            ('SELECT AuthorID FROM Author WHERE fistName = (?) AND lastName = (?)', (authorFirst, authorLast, ))))
+
+        #if the author already exists it is joined with the book here where the new author is also joined
+        cur.execute('INSERT INTO BookAuthorJoin VALUES (?, ?);', (bookid, authorid))
+        db.commit()
+
+        print('Book added')
 
     return
 
@@ -148,48 +211,57 @@ def changeReading():
     bookname = input('Give the name of the book: ')
     series = input('Give the series of the book: ')
     status = input('Status(not started/started/complete): ')
-    whereAt = input('What page are you at: ')
+    whereAt = int(input('What page are you at: '))
+
+    cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', ( bookname, series, ))
+    bookid = cur.fetchone()
+
     cur.execute('UPDATE ReadingStatus SET Status = (?), WhereAt = (?) \
-        WHERE (SELECT BookID FROM Book WHERE Name = (?) AND series = (?));', (int(status), whereAt, bookname, series))
-    db.commit()
-    
-    return
-
-def deleteFromShelf():
-    bookname = input('Give the name of the book: ')
-    series = input('Give the series of the book: ')
-    cur.execute('DELETE * Bookshelf WHERE BookshelfID = (?);', (('SELECT BookshelfID FROM Book WHERE Name = (?), Series = (?)', (bookname, series))))
+        WHERE BookID = (?);', (status, whereAt, bookid[0]))
     db.commit()
 
     return
-
 
 def modifyReview():
     
     bookname = input('Give the name of the book: ')
     series = input('Give the series of the book: ')
-    rating = input('Give the rating(1-5): ')
+    rating = int(input('Give the rating(1-5): '))
     review = input('Small written review: ')
+
+    cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', ( bookname, series, ))
+    bookid = cur.fetchone()
+
     cur.execute('UPDATE OwnReview SET Rating = (?), SmallReview = (?) \
-        WHERE (SELECT BookID FROM Book WHERE Name = (?) AND series = (?));', (rating, review, bookname, series))
+        WHERE BookID = (?);', (rating, review, bookid[0]))
     db.commit()
     return
 
 def printBook():
+
+    bookname = input('Give the name of the book: ')
+    series = input('Give the series of the book: ')
+    cur.execute('SELECT BookID FROM Book WHERE Name = (?) AND Series = (?);', ( bookname, series, ))
+    bookid = cur.fetchone()[0]
+
     
-    cur.execute('SELECT BookID, FirstName, LastName, Name, Series, Genre, ReleaseYear, Pages FROM AuthorBookJoin \
-        INNER JOIN Author ON AuthorBookJoin.AuthorID = Author.AuthorID \
-        INNER JOIN Book ON AuthorBookJoin.BookID = Book.BookID;')
+    cur.execute('SELECT Author.FirstName, Author.LastName, Book.Name, Book.Series, Book.Genre, Book.ReleaseYear, Book.Pages FROM BookAuthorJoin \
+        INNER JOIN Author ON Author.AuthorID = BookAuthorJoin.AuthorID \
+        INNER JOIN Book ON Book.BookID = BookAuthorJoin.BookID \
+        WHERE BookAuthorJoin.BookID = (?);', (bookid, ))
     bookAuthor = cur.fetchone()
 
-    cur.execute('SELECT Bookshelf, Shelf, Quote, Rating, Review, Status, whereAt FROM Book WHERE BookID = (?) \
-        INNER JOIN Bookshelf ON Bookshelf.BookshelfID = Book.BookshelfID\
-        INNER JOIN Quotes ON Quotes.BookID = Book.BookID\
-        INNER JOIN ReadingStatus ON ReadingStatus.BookID = Book.BookID\
-        INNER JOIN OwnReview ON OwnReview.BookID = Book.BookID;', (bookAuthor[0]))
+    cur.execute('SELECT Bookshelf.Bookshelf, Bookshelf.Shelf, Quotes.Quote, \
+            OwnReview.Rating, OwnReview.SmallReview, ReadingStatus.Status, ReadingStatus.whereAt FROM Book \
+        INNER JOIN Bookshelf ON Bookshelf.BookshelfID = Book.BookshelfID \
+        INNER JOIN Quotes ON Quotes.BookID = Book.BookID \
+        INNER JOIN ReadingStatus ON ReadingStatus.BookID = Book.BookID \
+        INNER JOIN OwnReview ON OwnReview.BookID = Book.BookID \
+        WHERE Book.BookID = (?);', (bookid, ))
     bookInfo = cur.fetchone()
 
-    print(bookAuthor + '\n' + bookInfo)
+    print(bookAuthor)
+    print(bookInfo)
     return
 
 main()
